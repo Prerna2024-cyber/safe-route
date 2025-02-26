@@ -1,83 +1,115 @@
 const express = require('express');
 const passport = require('passport');
-const Auth0Strategy = require('passport-auth0');
 const session = require('express-session');
+const mongoose = require('mongoose');
+const path = require("path");
+const { initializeApp } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 
-// Environment variables for Auth0 (Replace these with your actual Auth0 credentials)
-const AUTH0_DOMAIN = 'dev-gfixxzizoa7ce1gu.us.auth0.com';
-const AUTH0_CLIENT_ID = 'YOUR_AUTH0_CLIENT_ID'; // Replace with your Auth0 client ID
-const AUTH0_CLIENT_SECRET = 'YOUR_AUTH0_CLIENT_SECRET'; // Replace with your Auth0 client secret
-const AUTH0_CALLBACK_URL = 'http://localhost:3000/callback';
-const AUTH0_AUDIENCE = 'https://dev-gfixxzizoa7ce1gu.us.auth0.com/api/v2/'; // Your Auth0 Management API audience
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log('MongoDB Connected'))
+  .catch(err => console.log(err));
+
+const UserSchema = new mongoose.Schema({
+    googleId: String,
+    name: String,
+    email: String
+});
+const User = mongoose.model('User', UserSchema);
+
+// Firebase Admin Setup
+const firebaseConfig = {
+    credential: require('firebase-admin').credential.applicationDefault(),
+};
+initializeApp(firebaseConfig);
 
 // Configure session middleware
 app.use(session({
-    secret: 'your_secret_key',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true
 }));
 
-// Initialize Passport and configure Auth0 strategy
-passport.use(new Auth0Strategy({
-    domain: AUTH0_DOMAIN,
-    clientID: AUTH0_CLIENT_ID,
-    clientSecret: AUTH0_CLIENT_SECRET,
-    callbackURL: AUTH0_CALLBACK_URL,
-    audience: AUTH0_AUDIENCE,
-    scope: 'openid profile email'
-}, (accessToken, refreshToken, extraParams, profile, done) => {
-    // You can save the access token for further use in your app if needed
-    return done(null, profile);
+// Passport Google OAuth Strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        let user = await User.findOne({ googleId: profile.id });
+        if (!user) {
+            user = new User({
+                googleId: profile.id,
+                name: profile.displayName,
+                email: profile.emails[0].value
+            });
+            await user.save();
+        }
+        return done(null, user);
+    } catch (err) {
+        return done(err, null);
+    }
 }));
 
-// Serialize and deserialize user for the session
 passport.serializeUser((user, done) => {
-    done(null, user);
+    done(null, user.id);
 });
 
-passport.deserializeUser((user, done) => {
-    done(null, user);
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
 });
 
 // Initialize Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
-app.get('/', (req, res) => {
-    res.send('<h1>Home Page</h1><a href="/login">Login with Auth0</a>');
-});
+// Google Auth Routes
+app.get('/auth/google', passport.authenticate('google', {
+    scope: ['profile', 'email']
+}));
 
-// Route to trigger Auth0 login
-app.get('/login', passport.authenticate('auth0', {
-    scope: 'openid email profile'
-}), (req, res) => {
-    res.redirect('/');
-});
-
-// Auth0 callback URL route
-app.get('/callback', passport.authenticate('auth0', {
+app.get('/auth/google/callback', passport.authenticate('google', {
     failureRedirect: '/'
 }), (req, res) => {
     res.redirect('/dashboard');
 });
 
-// Dashboard route (Protected route)
+// Protected Dashboard Route
 app.get('/dashboard', (req, res) => {
     if (!req.isAuthenticated()) {
         return res.redirect('/');
     }
-    res.send(`<h1>Welcome, ${req.user.displayName || req.user.email}</h1><a href="/logout">Logout</a>`);
+    res.send(`<h1>Welcome, ${req.user.name}</h1><a href="/logout">Logout</a>`);
 });
 
-// Logout route
+// Logout Route
 app.get('/logout', (req, res) => {
-    req.logout((err) => {
-        if (err) { return next(err); }
-        res.redirect('/');
+    req.logout(() => {
+        req.session.destroy(() => {
+            res.redirect('/');
+        });
     });
+});
+
+// Serve React Frontend
+app.use(express.static(path.join(__dirname, "client/build")));
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 
 // Start server
