@@ -8,20 +8,7 @@ const { getAuth } = require('firebase-admin/auth');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const dotenv = require('dotenv');
 //adding some code for left rigt features
-import React from "react";
-import { SafeAreaView } from "react-native";
-import MapScreen from "./MapScreen"; 
-
-const App = () => {
-  return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <MapScreen />
-    </SafeAreaView>
-  );
-};
-
-export default App;
-
+//later
 //end of this 
 dotenv.config();
 //adding some function for sos and emergency call
