@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
     initMap();
     loadRecentReports();
     loadSafetyData();  
+    //me add kr rha hu
+    addSOSButton();
+    addEmergencyContacts();
+
 });
 
 function initMap() {
@@ -20,10 +24,9 @@ function initMap() {
         waypoints: [],
         routeWhileDragging: true
     }).addTo(map);
-    //adding fun declaration of fun
     addPanControls();
 }
-//here is the funs
+
 function addPanControls() {
     const panControls = document.createElement('div');
     panControls.innerHTML = `
@@ -37,6 +40,85 @@ function addPanControls() {
         </div>
     `;
     document.body.appendChild(panControls);
+}
+
+
+//2nd addition in my code
+
+function addSOSButton() {
+    const sosButton = document.createElement('button');
+    sosButton.innerHTML = '🚨 SOS';
+    sosButton.style = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: red;
+        color: white;
+        border: none;
+        padding: 15px 20px;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 10px;
+        z-index: 1000;
+    `;
+    sosButton.onclick = sendSOS;
+    document.body.appendChild(sosButton);
+}
+
+function sendSOS() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const userLocation = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            };
+            alert('SOS Alert Sent! Authorities have been notified.');
+            sendSOStoServer(userLocation);
+        }, () => {
+            alert('Location access denied! Please enable location services.');
+        });
+    } else {
+        alert('Geolocation is not supported by this browser.');
+    }
+}
+
+function sendSOStoServer(location) {
+    fetch('/sos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(location)
+    })
+    .then(response => response.json())
+    .then(data => alert(data.message))
+    .catch(error => alert('Error sending SOS.'));
+}
+
+function addEmergencyContacts() {
+    const contactsDiv = document.createElement('div');
+    contactsDiv.innerHTML = `
+        <div style="position: fixed; bottom: 80px; right: 20px; z-index: 1000;">
+            <button onclick="callPolice()" style="background: blue; color: white; margin-bottom: 5px; padding: 10px;">👮 Call Police</button>
+            <button onclick="callFamily()" style="background: green; color: white; padding: 10px;">📞 Call Family</button>
+        </div>
+    `;
+    document.body.appendChild(contactsDiv);
+}
+
+function callPolice() {
+    window.location.href = 'tel:100'; // Replace with appropriate emergency number
+}
+
+function callFamily() {
+    window.location.href = 'tel:+1234567890'; // Replace with actual family contact
+}
+
+
+
+
+// Function to move the map in a given direction
+function panMap(latOffset, lngOffset) {
+    const center = map.getCenter();
+    map.setView([center.lat + latOffset, center.lng + lngOffset], map.getZoom());
 }
 
 function geocodeAddress(address, callback) {
