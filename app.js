@@ -12,21 +12,7 @@ const dotenv = require('dotenv');
 //end of this 
 dotenv.config();
 //adding some function for sos and emergency call
-import React from "react";
-import { SafeAreaView } from "react-native";
-import SOSButton from "./SOSButton"; 
 
-const App = () => {
-  return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <SOSButton />
-    </SafeAreaView>
-  );
-};
-
-export default App;
-
-const app = express();
 //end of PB's 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
