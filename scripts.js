@@ -20,8 +20,24 @@ function initMap() {
         waypoints: [],
         routeWhileDragging: true
     }).addTo(map);
+    //adding fun declaration of fun
+    addPanControls();
 }
-
+//here is the funs
+function addPanControls() {
+    const panControls = document.createElement('div');
+    panControls.innerHTML = `
+        <div id="pan-controls" style="position: fixed; bottom: 30px; left: 30px; z-index: 1000; display: flex; flex-direction: column; align-items: center;">
+            <button onclick="panMap(0, -0.05)" style="margin-bottom: 5px;">⬅️</button>
+            <div style="display: flex;">
+                <button onclick="panMap(-0.05, 0)" style="margin-right: 5px;">⬇️</button>
+                <button onclick="panMap(0.05, 0)">⬆️</button>
+            </div>
+            <button onclick="panMap(0, 0.05)" style="margin-top: 5px;">➡️</button>
+        </div>
+    `;
+    document.body.appendChild(panControls);
+}
 
 function geocodeAddress(address, callback) {
     fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(address)}&key=${OPENCAGE_API_KEY}`)
