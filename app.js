@@ -7,13 +7,11 @@ const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const dotenv = require('dotenv');
-//adding some code for left rigt features
-//later
-//end of this 
-dotenv.config();
-//adding some function for sos and emergency call
 
-//end of PB's 
+dotenv.config();
+
+const app = express();
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
