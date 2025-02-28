@@ -22,8 +22,9 @@
             <h2>Login to Your Account</h2>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" placeholder="Enter your username" required>
+                    <label for="login-email">Email:</label>
+                   <input type="email" id="login-email" placeholder="Enter your email" required>
+
                 </div>
                 <div class="form-group">
                     <label for="password">Password:</label>
@@ -39,6 +40,50 @@
         <p id="footer-text">&copy; 2024 Mahila Sunaksha | Designed to keep you safe.</p>
     </footer>
 
-    <script src="scripts.js"></script>
+    <script type="module">
+        // Import Firebase Modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzvRISqxTBdriyd7FM0Gu4XcsxvotX5xg",
+            authDomain: "react-auth-app-b9b81.firebaseapp.com",
+            projectId: "react-auth-app-b9b81",
+            storageBucket: "react-auth-app-b9b81.appspot.com",
+            messagingSenderId: "921059190563",
+            appId: "1:921059190563:web:xxxxxxxxxxxxxxxxxx"
+        };
+    
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("✅ DOM Loaded, Ready for Login");
+    
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            console.log("✅ Firebase Initialized:", app);
+    
+            // Handle Login
+            const loginForm = document.getElementById("login-form");
+            if (loginForm) {
+                loginForm.addEventListener("submit", async function (e) {
+                    e.preventDefault();
+    
+                    const email = document.getElementById("login-email").value.trim();
+                    const password = document.getElementById("password").value;
+    
+                    try {
+                        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                        alert("✅ Login successful!");
+                        window.location.href = "index.html";
+                    } catch (error) {
+                        alert(`❌ Login failed: ${error.message}`);
+                    }
+                });
+            }
+        });
+    </script>
+    
+    
 </body>
 </html>
